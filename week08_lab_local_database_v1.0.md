@@ -72,7 +72,63 @@
 > ✅ **Checkpoint 1.1** บันทึกคำตอบจากคำถามด้านบนทั้ง 4 ข้อ พร้อมแนบภาพหน้าจอผลลัพธ์จาก Gemini
 
 ```text
-บันทึกผลลัพธ์ที่นี่
+import 'package:drift/drift.dart';
+
+// ==========================================
+// 1. ตารางเก็บรายการสินค้าที่ถูกใจ (FavoriteProducts)
+// ==========================================
+@DataClassName('FavoriteProduct')
+class FavoriteProducts extends Table {
+  // รหัสสินค้าอ้างอิงจากระบบ Backend/API (เป็นตัวเลข)
+  // กำหนดเป็น Primary Key เพราะ 1 สินค้ามีในรายการถูกใจของผู้ใช้ได้เพียง 1 แถว
+  IntColumn get productId => integer()();
+
+  // ชื่อสินค้า แคชไว้แสดงในการ์ด Favorite ทันทีโดยไม่ต้องต่อเน็ตหรือยิง API ซ้ำ
+  TextColumn get name => text().withLength(min: 1, max: 255)();
+
+  // ราคาสินค้า (ใช้ Real หรือ double เพื่อรองรับทศนิยม เช่น 199.50)
+  RealColumn get price => real()();
+
+  // URL หรือ Image Path ของรูปสินค้า เพื่อโหลดภาพขึ้นแสดงผลได้ทันที
+  TextColumn get imageUrl => text()();
+
+  // เวลาที่กดถูกใจ เพื่อใช้ ORDER BY likedAt DESC ในการเรียงลำดับสินค้าล่าสุด
+  DateTimeColumn get likedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {productId};
+}
+
+// ==========================================
+// 2. ตารางเก็บร่างประกาศขายสินค้าจาก AI (ListingDrafts)
+// ==========================================
+@DataClassName('ListingDraft')
+class ListingDrafts extends Table {
+  // Primary key แบบ Auto Increment สำหรับจัดการร่างประกาศแต่ละรายการในเครื่อง
+  IntColumn get id => integer().autoIncrement()();
+
+  // ชื่อประกาศขายที่ AI แนะนำ หรือผู้ใช้แก้ไข
+  TextColumn get title => text().withLength(min: 1, max: 255)();
+
+  // หมวดหมู่สินค้า เช่น 'ตำราเรียน', 'อุปกรณ์อิเล็กทรอนิกส์', 'ของใช้หอพัก'
+  TextColumn get category => text().withLength(min: 1, max: 100)();
+
+  // คำบรรยายรายละเอียดสินค้าที่ AI วิเคราะห์และเจนขึ้นมา (อนุญาตให้ว่างได้ nullable)
+  TextColumn get description => text().nullable()();
+
+  // Path ของไฟล์รูปภาพที่บันทึกอยู่ในเครื่อง เช่น /data/user/0/.../app_flutter/draft_1.jpg
+  TextColumn get localImagePath => text()();
+
+  // ราคาที่ AI แนะนำหรือผู้ใช้กรอก (nullable เผื่อกรณี AI ยังไม่มั่นใจราคา)
+  RealColumn get price => real().nullable()();
+
+  // วันเวลาที่สร้างร่างประกาศ
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  // วันเวลาที่แก้ไขร่างล่าสุด เพื่อเรียงลำดับดึงร่างล่าสุดมาทำงานต่อ
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 ```
 
 ---
